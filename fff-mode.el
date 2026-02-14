@@ -1,4 +1,4 @@
-;;; fff-mode.el --- Fat Finger Forgiveness for Emacs -*- lexical-binding: t; -*-
+;;; fff-mode.el --- Fat Finger Forgiveness -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Le Wang
 
@@ -109,9 +109,9 @@ separated by nil undo boundaries)."
               (<= (cdr metrics) fff-max-changes)))))
 
 (defun fff--buffer-stale-function (&optional noconfirm)
-  "Like `buffer-stale--default-function' but also considers fat-fingered buffers.
-When the default says \"not stale\" (buffer modified), fallback checks:
-file changed on disk AND fat-fingered? -> return non-nil -> auto-revert proceeds."
+  "Like `buffer-stale--default-function' but handles fat-fingers.
+When the default says not stale (buffer modified), check: file
+changed on disk AND fat-fingered?  If so, report stale."
   (or (buffer-stale--default-function noconfirm)
       (and (memq 'auto-revert fff-features)
            buffer-file-name
@@ -129,11 +129,11 @@ Changes accumulate until they exceed the threshold."
   "Saved default value of `buffer-stale-function' before `fff-mode' activation.")
 
 (defvar fff--saved-predicate nil
-  "Saved value of `save-some-buffers-default-predicate' before `fff-mode' activation.")
+  "Saved `save-some-buffers-default-predicate' before activation.")
 
 ;;;###autoload
 (define-minor-mode fff-mode
-  "Fat Finger Forgiveness -- auto-handle buffers with trivially small modifications."
+  "Fat Finger Forgiveness for trivially modified buffers."
   :global t
   :lighter " fff"
   (if fff-mode
