@@ -1,6 +1,6 @@
 # fff-mode
 
-Fat Finger Forgiveness for Emacs -- auto-handle buffers with trivially small accidental modifications.
+Fat Finger Forgiveness for Emacs.
 
 Two annoyances when you accidentally hit a key in a buffer backed by a file:
 

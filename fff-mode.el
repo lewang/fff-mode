@@ -1,4 +1,4 @@
-;;; fff-mode.el --- Fat Finger Forgiveness for auto-revert and save-some-buffers -*- lexical-binding: t; -*-
+;;; fff-mode.el --- Fat Finger Forgiveness for Emacs -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Le Wang
 
