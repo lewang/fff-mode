@@ -64,43 +64,49 @@
   :type '(set (const auto-revert) (const save-some-buffers))
   :group 'fff)
 
+(defun fff--undo-metrics (undo-list)
+  "Return (CHARS . CHANGES) from UNDO-LIST up to the first save marker.
+CHARS is total characters inserted+deleted.
+CHANGES is the number of distinct change groups (runs of edits
+separated by nil undo boundaries)."
+  (let ((chars 0)
+        (changes 0)
+        (tail undo-list)
+        (seen-change nil))
+    (while (and tail (not (and (consp (car tail))
+                               (eq (car-safe (car tail)) t))))
+      (let ((entry (car tail)))
+        (cond
+         ;; nil = undo boundary
+         ((null entry)
+          (when seen-change
+            (cl-incf changes)
+            (setq seen-change nil)))
+         ;; (BEG . END) = insertion
+         ((and (consp entry)
+               (integerp (car entry))
+               (integerp (cdr entry)))
+          (cl-incf chars (abs (- (cdr entry) (car entry))))
+          (setq seen-change t))
+         ;; (TEXT . POS) = deletion
+         ((and (consp entry)
+               (stringp (car entry))
+               (integerp (cdr entry)))
+          (cl-incf chars (length (car entry)))
+          (setq seen-change t))))
+      (setq tail (cdr tail)))
+    ;; Count final change group if no trailing boundary
+    (when seen-change
+      (cl-incf changes))
+    (cons chars changes)))
+
 (defun fff--fat-finger-p ()
-  "Return non-nil when current buffer's modifications are below both thresholds.
-Walks `buffer-undo-list' from head to first (t . TIME) marker, counting
-characters from insertions/deletions and change groups from nil boundaries."
+  "Return non-nil when current buffer's modifications are below both thresholds."
   (and (buffer-modified-p)
        (not (eq buffer-undo-list t))
-       (let ((chars 0)
-             (changes 0)
-             (tail buffer-undo-list)
-             (seen-change nil))
-         (while (and tail (not (and (consp (car tail))
-                                    (eq (car-safe (car tail)) t))))
-           (let ((entry (car tail)))
-             (cond
-              ;; nil = undo boundary
-              ((null entry)
-               (when seen-change
-                 (cl-incf changes)
-                 (setq seen-change nil)))
-              ;; (BEG . END) = insertion
-              ((and (consp entry)
-                    (integerp (car entry))
-                    (integerp (cdr entry)))
-               (cl-incf chars (abs (- (cdr entry) (car entry))))
-               (setq seen-change t))
-              ;; (TEXT . POS) = deletion
-              ((and (consp entry)
-                    (stringp (car entry))
-                    (integerp (cdr entry)))
-               (cl-incf chars (length (car entry)))
-               (setq seen-change t))))
-           (setq tail (cdr tail)))
-         ;; Count final change group if no trailing boundary
-         (when seen-change
-           (cl-incf changes))
-         (and (<= chars fff-max-characters)
-              (<= changes fff-max-changes)))))
+       (let ((metrics (fff--undo-metrics buffer-undo-list)))
+         (and (<= (car metrics) fff-max-characters)
+              (<= (cdr metrics) fff-max-changes)))))
 
 (defun fff--buffer-stale-function (&optional noconfirm)
   "Like `buffer-stale--default-function' but also considers fat-fingered buffers.
