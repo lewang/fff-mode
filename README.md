@@ -39,6 +39,17 @@ modifications are below the thresholds. If so, it reports the buffer as stale an
 **save-some-buffers path**: `fff-mode` sets `save-some-buffers-default-predicate` to a function that returns nil for
 fat-fingered buffers, causing `save-some-buffers` to skip the save prompt for them.
 
+## Prior art
+
+- **[unmodified-buffer](https://github.com/arthurcgusmao/unmodified-buffer)** — shells out to `diff -q` to detect
+  edits that cancel out. Complementary: it clears the modified flag when content matches disk, but doesn't hook into
+  `buffer-stale-function` or `save-some-buffers-default-predicate`.
+- **revert-buffer-all** — brute-force revert all buffers; no threshold logic.
+
+What's novel here: undo-list introspection with configurable thresholds (no disk I/O), `buffer-stale-function`
+override for auto-revert, and `save-some-buffers-default-predicate` integration for prompt suppression. No advice is
+used — everything works through well-designed hooks built into Emacs.
+
 ## License
 
 GPL-3.0-or-later
