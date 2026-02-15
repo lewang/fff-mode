@@ -131,27 +131,26 @@ Changes accumulate until they exceed the threshold."
 (defvar fff--saved-predicate nil
   "Saved `save-some-buffers-default-predicate' before activation.")
 
-(defvar fff--saved-magit-predicate nil
-  "Saved `magit-save-repository-buffers-predicate' before activation.")
+(defvar fff--magit-original-predicate nil
+  "Original `magit-save-repository-buffers-predicate' before `fff-mode' activation.")
 
-(defun fff--wrap-magit-predicate (orig)
-  "Return a predicate that skips fat-fingered buffers, then delegates to ORIG."
-  (lambda (topdir)
-    (and (not (fff--fat-finger-p))
-         (funcall orig topdir))))
+(defun fff--magit-predicate (topdir)
+  "Like the original magit predicate, but skip fat-fingered buffers.
+Delegates to the predicate saved in `fff--magit-original-predicate'."
+  (when (fff--save-some-buffers-predicate)
+    (funcall fff--magit-original-predicate topdir)))
 
 (defun fff--setup-magit ()
   "Integrate fff-mode with magit's buffer-save predicate."
-  (when (memq 'save-some-buffers fff-features)
-    (setq fff--saved-magit-predicate magit-save-repository-buffers-predicate)
-    (setq magit-save-repository-buffers-predicate
-          (fff--wrap-magit-predicate fff--saved-magit-predicate))))
+  (when fff-mode
+    (setq fff--magit-original-predicate magit-save-repository-buffers-predicate)
+    (setq magit-save-repository-buffers-predicate #'fff--magit-predicate)))
 
 (defun fff--teardown-magit ()
   "Remove fff-mode integration from magit."
-  (when fff--saved-magit-predicate
-    (setq magit-save-repository-buffers-predicate fff--saved-magit-predicate)
-    (setq fff--saved-magit-predicate nil)))
+  (when fff--magit-original-predicate
+    (setq magit-save-repository-buffers-predicate fff--magit-original-predicate)
+    (setq fff--magit-original-predicate nil)))
 
 ;;;###autoload
 (define-minor-mode fff-mode
