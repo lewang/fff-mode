@@ -41,9 +41,10 @@ fat-fingered buffers, causing `save-some-buffers` to skip the save prompt for th
 
 **magit path**: Magit saves modified repository buffers before running git commands (`magit-save-repository-buffers`),
 but it passes its own predicate to `save-some-buffers`, bypassing `save-some-buffers-default-predicate` entirely.
-`fff-mode` wraps `magit-save-repository-buffers-predicate` so fat-fingered buffers are skipped during magit's
-pre-command save as well. The integration is deferred via `eval-after-load` when magit isn't yet loaded, so load order
-doesn't matter.
+`fff-mode` replaces `magit-save-repository-buffers-predicate` with a named function that applies the same fat-finger
+filter used by the save-some-buffers path, then delegates to the original predicate for repo-scoping. The two concerns
+are orthogonal: the fat-finger check is buffer-local; the original predicate handles repository membership via
+`topdir`. The integration is deferred via `eval-after-load` when magit isn't yet loaded, so load order doesn't matter.
 
 **Note**: `save-buffers-kill-emacs` (`C-x C-c`) intentionally bypasses `save-some-buffers-default-predicate` — Emacs
 wants to be extra cautious when quitting. You will still be prompted about fat-fingered buffers on exit, which is a
@@ -57,9 +58,8 @@ reasonable safety net.
 - **revert-buffer-all** — brute-force revert all buffers; no threshold logic.
 
 What's novel here: undo-list introspection with configurable thresholds (no disk I/O), `buffer-stale-function`
-override for auto-revert, `save-some-buffers-default-predicate` integration for prompt suppression, and
-`magit-save-repository-buffers-predicate` wrapping for magit. No advice is used — everything works through dedicated
-extension points.
+override for auto-revert, and a single fat-finger predicate shared by both `save-some-buffers-default-predicate` and
+`magit-save-repository-buffers-predicate`. No advice is used — everything works through dedicated extension points.
 
 ## License
 
