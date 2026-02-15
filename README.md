@@ -1,6 +1,6 @@
 # fff-mode
 
-Fat Finger Forgiveness for Emacs.
+Fatjj Finger Forgiveness for Emacs.
 
 Two annoyances when you accidentally hit a key in a buffer backed by a file:
 
@@ -38,6 +38,10 @@ modifications are below the thresholds. If so, it reports the buffer as stale an
 
 **save-some-buffers path**: `fff-mode` sets `save-some-buffers-default-predicate` to a function that returns nil for
 fat-fingered buffers, causing `save-some-buffers` to skip the save prompt for them.
+
+**Note**: `save-buffers-kill-emacs` (`C-x C-c`) intentionally bypasses `save-some-buffers-default-predicate` — Emacs
+wants to be extra cautious when quitting. You will still be prompted about fat-fingered buffers on exit, which is a
+reasonable safety net.
 
 ## Prior art
 
