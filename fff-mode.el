@@ -131,6 +131,28 @@ Changes accumulate until they exceed the threshold."
 (defvar fff--saved-predicate nil
   "Saved `save-some-buffers-default-predicate' before activation.")
 
+(defvar fff--saved-magit-predicate nil
+  "Saved `magit-save-repository-buffers-predicate' before activation.")
+
+(defun fff--wrap-magit-predicate (orig)
+  "Return a predicate that skips fat-fingered buffers, then delegates to ORIG."
+  (lambda (topdir)
+    (and (not (fff--fat-finger-p))
+         (funcall orig topdir))))
+
+(defun fff--setup-magit ()
+  "Integrate fff-mode with magit's buffer-save predicate."
+  (when (memq 'save-some-buffers fff-features)
+    (setq fff--saved-magit-predicate magit-save-repository-buffers-predicate)
+    (setq magit-save-repository-buffers-predicate
+          (fff--wrap-magit-predicate fff--saved-magit-predicate))))
+
+(defun fff--teardown-magit ()
+  "Remove fff-mode integration from magit."
+  (when fff--saved-magit-predicate
+    (setq magit-save-repository-buffers-predicate fff--saved-magit-predicate)
+    (setq fff--saved-magit-predicate nil)))
+
 ;;;###autoload
 (define-minor-mode fff-mode
   "Fat Finger Forgiveness for trivially modified buffers."
@@ -141,9 +163,14 @@ Changes accumulate until they exceed the threshold."
         (setq fff--saved-stale-function (default-value 'buffer-stale-function))
         (setq-default buffer-stale-function #'fff--buffer-stale-function)
         (setq fff--saved-predicate save-some-buffers-default-predicate)
-        (setq save-some-buffers-default-predicate #'fff--save-some-buffers-predicate))
+        (setq save-some-buffers-default-predicate #'fff--save-some-buffers-predicate)
+        (if (boundp 'magit-save-repository-buffers-predicate)
+            (fff--setup-magit)
+          (eval-after-load 'magit-mode #'fff--setup-magit)))
     (setq-default buffer-stale-function fff--saved-stale-function)
-    (setq save-some-buffers-default-predicate fff--saved-predicate)))
+    (setq save-some-buffers-default-predicate fff--saved-predicate)
+    (when (boundp 'magit-save-repository-buffers-predicate)
+      (fff--teardown-magit))))
 
 (provide 'fff-mode)
 ;;; fff-mode.el ends here
