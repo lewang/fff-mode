@@ -110,8 +110,9 @@ separated by nil undo boundaries)."
 
 (defun fff--buffer-stale-function (&optional noconfirm)
   "Like `buffer-stale--default-function' but handles fat-fingers.
-When the default says not stale (buffer modified), check: file
-changed on disk AND fat-fingered?  If so, report stale."
+NOCONFIRM is passed through to the default function.  When it says
+not stale (buffer modified), check: file changed on disk AND
+fat-fingered?  If so, report stale."
   (or (buffer-stale--default-function noconfirm)
       (and (memq 'auto-revert fff-features)
            buffer-file-name
@@ -136,18 +137,19 @@ Changes accumulate until they exceed the threshold."
 
 (defun fff--magit-predicate (topdir)
   "Like the original magit predicate, but skip fat-fingered buffers.
-Delegates to the predicate saved in `fff--magit-original-predicate'."
+TOPDIR is passed through to the predicate saved in
+`fff--magit-original-predicate'."
   (when (fff--save-some-buffers-predicate)
     (funcall fff--magit-original-predicate topdir)))
 
 (defun fff--setup-magit ()
-  "Integrate fff-mode with magit's buffer-save predicate."
+  "Integrate `fff-mode' with magit's buffer-save predicate."
   (when fff-mode
     (setq fff--magit-original-predicate magit-save-repository-buffers-predicate)
     (setq magit-save-repository-buffers-predicate #'fff--magit-predicate)))
 
 (defun fff--teardown-magit ()
-  "Remove fff-mode integration from magit."
+  "Remove `fff-mode' integration from magit."
   (when fff--magit-original-predicate
     (setq magit-save-repository-buffers-predicate fff--magit-original-predicate)
     (setq fff--magit-original-predicate nil)))
