@@ -165,7 +165,8 @@ TOPDIR is passed through to the predicate saved in
 
 (defun fff--setup-magit ()
   "Integrate `fff-mode' with magit's buffer-save predicate."
-  (when fff-mode
+  (when (and fff-mode
+             (not (eq magit-save-repository-buffers-predicate #'fff--magit-predicate)))
     (setq fff--magit-original-predicate magit-save-repository-buffers-predicate)
     (setq magit-save-repository-buffers-predicate #'fff--magit-predicate)))
 
